@@ -1,27 +1,52 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Net.Mail;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
 
 public class Player : MonoBehaviour
 {
-    public float vel;
+    [Header("Movimento")]
+    [SerializeField] private float velocidade;
+    [Header("Camera")]
+    [SerializeField] private float sensibilidade;
+    [SerializeField] private float anguloVMax;
+
+    private Vector3 movimento, mouseCamera;
     private Rigidbody rbPlayer;
 
-    void Awake()
+    private void Start()
     {
-        rbPlayer = this.GetComponent<Rigidbody>();
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+        rbPlayer = this.GetComponent<Rigidbody>();    
     }
 
-    // Update is called once per frame
     void Update()
     {
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+            Debug.Break();
+        }
 
+        #region InputMovimento
+        movimento = new Vector3(Input.GetAxisRaw("Horizontal"), 0 ,Input.GetAxisRaw("Vertical")).normalized * velocidade ;
+        #endregion
+        #region InputMouseCamera
+        mouseCamera = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y"));
+        #endregion
     }
 
-    void FixedUpdate()
+    private void FixedUpdate()
     {
-        print(Input.GetAxis("Horizontal"));
-        rbPlayer.velocity = new Vector3(rbPlayer.velocity.x, rbPlayer.velocity.y, Input.GetAxis("Vertical") * vel);
+        #region Movimento
+        rbPlayer.velocity = this.transform.forward * movimento.z + this.transform.right * movimento.x + rbPlayer.velocity.y * Vector3.up;
+        #endregion
+        #region MouseCamera
+        this.transform.eulerAngles += mouseCamera.x * sensibilidade * Vector3.up;
+
+        Camera.main.transform.localEulerAngles = Mathf.Clamp((Camera.main.transform.localEulerAngles.x <= 180 ? Camera.main.transform.localEulerAngles.x : Camera.main.transform.localEulerAngles.x - 360) - mouseCamera.y * sensibilidade, -anguloVMax, anguloVMax) * Vector2.right;
+        #endregion
     }
 }
